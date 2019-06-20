@@ -168,7 +168,7 @@ class BresserUSB(weewx.drivers.AbstractDevice):
     while True:
       try:
         dataset=self.read_usb_dataset()
-      except usb.core.USBError as e:
+      except e:
         logerr("Lost USB connection.: %s" % e)
         self.closePort()
         self.openPort()
@@ -207,7 +207,7 @@ class BresserUSB(weewx.drivers.AbstractDevice):
         'windSpeed'   : ds[9], #km/h
         'windGust'    : ds[10], #km/h
         'windDir'     : ds[11], #degrees
-        'windCardinal': ds[12], #N,NNE,NE,ENE,E,ESE,SE,SSE,S,SSW,SW,WSW,W,WNW,NW,NNW
+        'windOrdinal': ds[12], #N,NNE,NE,ENE,E,ESE,SE,SSE,S,SSW,SW,WSW,W,WNW,NW,NNW
         'pressure'    : ds[13], #mBar/hPa
         'pressureAbs' : ds[14], #mBar/hPa
         'UV'          : ds[15], #"index"
@@ -229,8 +229,67 @@ class BresserUSB(weewx.drivers.AbstractDevice):
         'ch7Humidity' : ds[31], #mBar/hPa
         'usUnits' : weewx.US
       }
+      
+      if _packet['inTemp'] == "--.-":
+        del packet['inTemp']
+      if _packet['inHumidity'] == "--":
+        del packet['inHumidity']
+      if _packet['outTemp'] == "--.-":
+        del packet['outTemp']
+      if _packet['outHumidity'] == "--":
+        del packet['outHumidity']
+      if _packet['rain'] == "--.-":
+        del packet['rain']
+      if _packet['rainDaily'] == "--.-":
+        del packet['rainDaily']
+      if _packet['windSpeed'] == "--.-":
+        del packet['windSpeed']
+      if _packet['windGust'] == "--.-":
+        del packet['windGust']
+      if _packet['windDir'] == "---":
+        del packet['windDir']
+      if _packet['windOrdinal'] == "---":
+        del packet['windOrdinal']
+      if _packet['pressure'] == "----":
+        del packet['pressure']
+      if _packet['pressureAbs'] == "----":
+        del packet['pressureAbs']
+      if _packet['UV'] == "--":
+        del packet['UV']
+      if _packet['dewPoint'] == "--.-":
+        del packet['dewPoint']
+      if _packet['heatIndex'] == "--.-":
+        del packet['heatIndex']
 
-      #TODO: Prevent cumulative wait 
+      if _packet['ch1Temp'] == "--.-":
+        del packet['ch1Temp']
+      if _packet['ch1Humidity'] == "--":
+        del packet['ch1Humidity']
+      if _packet['ch2Temp'] == "--.-":
+        del packet['ch2Temp']
+      if _packet['ch2Humidity'] == "--":
+        del packet['ch2Humidity']
+      if _packet['ch3Temp'] == "--.-":
+        del packet['ch3Temp']
+      if _packet['ch3Humidity'] == "--":
+        del packet['ch3Humidity']
+      if _packet['ch4Temp'] == "--.-":
+        del packet['ch4Temp']
+      if _packet['ch4Humidity'] == "--":
+        del packet['ch4Humidity']
+      if _packet['ch5Temp'] == "--.-":
+        del packet['ch5Temp']
+      if _packet['ch5Humidity'] == "--":
+        del packet['ch5Humidity']
+      if _packet['ch6Temp'] == "--.-":
+        del packet['ch6Temp']
+      if _packet['ch6Humidity'] == "--":
+        del packet['ch6Humidity']
+      if _packet['ch7Temp'] == "--.-":
+        del packet['ch7Temp']
+      if _packet['ch7Humidity'] == "--":
+        del packet['ch7Humidity']
+
       yield _packet
       sleep_time = self.the_time + self.loop_interval - time.time()
       if sleep_time > 0:
