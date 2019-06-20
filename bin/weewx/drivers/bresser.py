@@ -168,8 +168,8 @@ class BresserUSB(weewx.drivers.AbstractDevice):
     while True:
       try:
         dataset=self.read_usb_dataset()
-      except e:
-        logerr("Lost USB connection.: %s" % e)
+      except:
+        logerr("Lost USB connection. Reconnecting...")
         self.closePort()
         self.openPort()
         self.the_time = time.time()
@@ -195,9 +195,13 @@ class BresserUSB(weewx.drivers.AbstractDevice):
         loginf("Delta too big: %i (Computer: %s, Station: %s)" % (deltat.total_seconds(), computer_now, station_now))
         self.setTime()
   
+      packet = {
+        'usUnits': weewx.METRIC,
+        'dateTime': int(self.the_time+0.5)
+      }
+
       #2 2019-06-18 23:33 25.4 58 19.5 69 0.0 0.0 3.6 3.6 253 WSW 1014 953 0 13.6 --.- --.- -- --.- -- --.- -- --.- -- --.- -- --.- -- --.- --
-      _packet = {
-        'dateTime'    : int(self.the_time+0.5), 
+      weatherdata = {
         'inTemp'      : ds[3], #Celsius
         'inHumidity'  : ds[4], #%REL
         'outTemp'     : ds[5], #Celsius
@@ -207,90 +211,41 @@ class BresserUSB(weewx.drivers.AbstractDevice):
         'windSpeed'   : ds[9], #km/h
         'windGust'    : ds[10], #km/h
         'windDir'     : ds[11], #degrees
-        'windOrdinal': ds[12], #N,NNE,NE,ENE,E,ESE,SE,SSE,S,SSW,SW,WSW,W,WNW,NW,NNW
-        'pressure'    : ds[13], #mBar/hPa
-        'pressureAbs' : ds[14], #mBar/hPa
+        'windOrdinal' : ds[12], #N,NNE,NE,ENE,E,ESE,SE,SSE,S,SSW,SW,WSW,W,WNW,NW,NNW
+        'barometer'   : ds[13], #mBar/hPa
+        'pressure'    : ds[14], #mBar/hPa
         'UV'          : ds[15], #"index"
         'dewPoint'    : ds[16], #Celsius
         'heatIndex'   : ds[17], #Celsius
-        'ch1Temp  '   : ds[18], #Celsius
+        'ch1Temp'     : ds[18], #Celsius
         'ch1Humidity' : ds[19], #mBar/hPa
-        'ch2Temp  '   : ds[20], #Celsius
+        'ch2Temp'     : ds[20], #Celsius
         'ch2Humidity' : ds[21], #mBar/hPa
-        'ch3Temp  '   : ds[22], #Celsius
+        'ch3Temp'     : ds[22], #Celsius
         'ch3Humidity' : ds[23], #mBar/hPa
-        'ch4Temp  '   : ds[24], #Celsius
+        'ch4Temp'     : ds[24], #Celsius
         'ch4Humidity' : ds[25], #mBar/hPa
-        'ch5Temp  '   : ds[26], #Celsius
+        'ch5Temp'     : ds[26], #Celsius
         'ch5Humidity' : ds[27], #mBar/hPa
-        'ch6Temp  '   : ds[28], #Celsius
+        'ch6Temp'     : ds[28], #Celsius
         'ch6Humidity' : ds[29], #mBar/hPa
-        'ch7Temp  '   : ds[30], #Celsius
+        'ch7Temp'     : ds[30], #Celsius
         'ch7Humidity' : ds[31], #mBar/hPa
-        'usUnits' : weewx.US
       }
-      
-      if _packet['inTemp'] == "--.-":
-        del packet['inTemp']
-      if _packet['inHumidity'] == "--":
-        del packet['inHumidity']
-      if _packet['outTemp'] == "--.-":
-        del packet['outTemp']
-      if _packet['outHumidity'] == "--":
-        del packet['outHumidity']
-      if _packet['rain'] == "--.-":
-        del packet['rain']
-      if _packet['rainDaily'] == "--.-":
-        del packet['rainDaily']
-      if _packet['windSpeed'] == "--.-":
-        del packet['windSpeed']
-      if _packet['windGust'] == "--.-":
-        del packet['windGust']
-      if _packet['windDir'] == "---":
-        del packet['windDir']
-      if _packet['windOrdinal'] == "---":
-        del packet['windOrdinal']
-      if _packet['pressure'] == "----":
-        del packet['pressure']
-      if _packet['pressureAbs'] == "----":
-        del packet['pressureAbs']
-      if _packet['UV'] == "--":
-        del packet['UV']
-      if _packet['dewPoint'] == "--.-":
-        del packet['dewPoint']
-      if _packet['heatIndex'] == "--.-":
-        del packet['heatIndex']
 
-      if _packet['ch1Temp'] == "--.-":
-        del packet['ch1Temp']
-      if _packet['ch1Humidity'] == "--":
-        del packet['ch1Humidity']
-      if _packet['ch2Temp'] == "--.-":
-        del packet['ch2Temp']
-      if _packet['ch2Humidity'] == "--":
-        del packet['ch2Humidity']
-      if _packet['ch3Temp'] == "--.-":
-        del packet['ch3Temp']
-      if _packet['ch3Humidity'] == "--":
-        del packet['ch3Humidity']
-      if _packet['ch4Temp'] == "--.-":
-        del packet['ch4Temp']
-      if _packet['ch4Humidity'] == "--":
-        del packet['ch4Humidity']
-      if _packet['ch5Temp'] == "--.-":
-        del packet['ch5Temp']
-      if _packet['ch5Humidity'] == "--":
-        del packet['ch5Humidity']
-      if _packet['ch6Temp'] == "--.-":
-        del packet['ch6Temp']
-      if _packet['ch6Humidity'] == "--":
-        del packet['ch6Humidity']
-      if _packet['ch7Temp'] == "--.-":
-        del packet['ch7Temp']
-      if _packet['ch7Humidity'] == "--":
-        del packet['ch7Humidity']
+      for key in weatherdata:
+        try:
+          packet[key] = float(weatherdata[key])
+        except:
+          pass
 
-      yield _packet
+      try: #staation sends rain in mm, weewx expects cm
+        packet['rain'] = 0.1 * packet['rain']
+        packet['rainDaily'] = 0.1 * packet['rainDaily']
+      except:
+        pass
+        
+      yield packet
       sleep_time = self.the_time + self.loop_interval - time.time()
       if sleep_time > 0:
         time.sleep(sleep_time)
