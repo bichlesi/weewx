@@ -425,6 +425,14 @@ def update_to_v25(config_dict):
     except KeyError:
         pass
 
+    # --- Bresser 6-in-1 ---
+
+    try:
+        if config_dict['BresserUSB']['driver'].strip() == 'weewx.bresser':
+            config_dict['BresserUSB']['driver'] = 'weewx.drivers.bresser'
+    except KeyError:
+        pass
+
     # --- The weewx Simulator ---
 
     try:
