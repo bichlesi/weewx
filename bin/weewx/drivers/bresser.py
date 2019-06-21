@@ -91,11 +91,11 @@ class BresserUSB(weewx.drivers.AbstractDevice):
     self.openport_interval = 15
     self.timeout       = float(stn_dict.get('timeout', 15))
     self.debug         = int(stn_dict.get('debug', 0))
-    self.the_time      = time.time()
+    self.last_time     = None
+    self.last_rain     = None
+    self.devh          = None
     loginf('driver version is %s' % DRIVER_VERSION)
-    self.devh = None
     self.openPort()
-    self.setTime()
 
   def openPort(self):
     if self.devh is not None:
@@ -172,7 +172,6 @@ class BresserUSB(weewx.drivers.AbstractDevice):
         logerr("Lost USB connection. Reconnecting...")
         self.closePort()
         self.openPort()
-        self.the_time = time.time()
         continue
         
       ds=dataset.split()
@@ -180,6 +179,7 @@ class BresserUSB(weewx.drivers.AbstractDevice):
       if len(ds) != 32:
         logerr("Got dataset with %i entries (instead of 32): '%s'" % (len(ds), dataset))
         continue
+        
       ds_index = ds[0]
       ds_date  = ds[1]
       ds_time  = ds[2]
@@ -194,10 +194,12 @@ class BresserUSB(weewx.drivers.AbstractDevice):
       if deltat.total_seconds() > 70 or deltat.total_seconds() < -10:
         loginf("Delta too big: %i (Computer: %s, Station: %s)" % (deltat.total_seconds(), computer_now, station_now))
         self.setTime()
-  
+      this_time = time.time()
+      if self.last_time == None:
+        self.last_time = this_time
       packet = {
         'usUnits': weewx.METRIC,
-        'dateTime': int(self.the_time+0.5)
+        'dateTime': int((this_time+self.last_time)/2.0)
       }
 
       #2 2019-06-18 23:33 25.4 58 19.5 69 0.0 0.0 3.6 3.6 253 WSW 1014 953 0 13.6 --.- --.- -- --.- -- --.- -- --.- -- --.- -- --.- -- --.- --
@@ -206,8 +208,8 @@ class BresserUSB(weewx.drivers.AbstractDevice):
         'inHumidity'  : ds[4], #%REL
         'outTemp'     : ds[5], #Celsius
         'outHumidity' : ds[6], #%REL
-        'rain'        : ds[7], #mmHourly
-        'rainDaily'   : ds[8], #mmDaily
+        'rainDaily'   : ds[7], #mm accumulated
+        'rainPerHour' : ds[8], #mm/hr
         'windSpeed'   : ds[9], #km/h
         'windGust'    : ds[10], #km/h
         'windDir'     : ds[11], #degrees
@@ -239,19 +241,12 @@ class BresserUSB(weewx.drivers.AbstractDevice):
         except:
           pass
 
-      try: #staation sends rain in mm, weewx expects cm
-        packet['rain'] = 0.1 * packet['rain']
-        packet['rainDaily'] = 0.1 * packet['rainDaily']
-      except:
-        pass
-        
+      if 'rainDaily' in packet: #station sends rain in mm/day, weewx expects cm per interval
+        if self.last_rain != None:
+          packet['rain'] = 0.1*(packet['rainDaily']-self.last_rain)
+      self.last_rain = packet['rainDaily']
       yield packet
-      sleep_time = self.the_time + self.loop_interval - time.time()
-      if sleep_time > 0:
-        time.sleep(sleep_time)
-        self.the_time += self.loop_interval
-      else:
-        self.the_time = time.time()
+      self.last_time = this_time
 
   def read_usb_dataset(self):
     dataset = ""
