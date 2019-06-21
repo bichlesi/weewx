@@ -247,8 +247,7 @@ class BresserUSB(weewx.drivers.AbstractDevice):
       if 'rainDaily' in packet: #station sends rain in mm/day, weewx expects cm per interval
         if self.last_rain != None:
           packet['rain'] = 0.1*(packet['rainDaily']-self.last_rain)
-
-          self.last_rain = packet['rainDaily']
+        self.last_rain = packet['rainDaily']
       yield packet
       self.last_time = this_time
 
