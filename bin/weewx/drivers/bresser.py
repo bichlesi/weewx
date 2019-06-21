@@ -221,20 +221,20 @@ class BresserUSB(weewx.drivers.AbstractDevice):
         'UV'          : ds[15], #"index"
         'dewPoint'    : ds[16], #Celsius
         'heatIndex'   : ds[17], #Celsius
-        'ch1Temp'     : ds[18], #Celsius
-        'ch1Humidity' : ds[19], #mBar/hPa
-        'ch2Temp'     : ds[20], #Celsius
-        'ch2Humidity' : ds[21], #mBar/hPa
-        'ch3Temp'     : ds[22], #Celsius
-        'ch3Humidity' : ds[23], #mBar/hPa
-        'ch4Temp'     : ds[24], #Celsius
-        'ch4Humidity' : ds[25], #mBar/hPa
-        'ch5Temp'     : ds[26], #Celsius
-        'ch5Humidity' : ds[27], #mBar/hPa
-        'ch6Temp'     : ds[28], #Celsius
-        'ch6Humidity' : ds[29], #mBar/hPa
-        'ch7Temp'     : ds[30], #Celsius
-        'ch7Humidity' : ds[31], #mBar/hPa
+        'extraTemp1'  : ds[18], #Celsius
+        'extraHumid1' : ds[19], #mBar/hPa
+        'extraTemp2'  : ds[20], #Celsius
+        'extraHumid2' : ds[21], #mBar/hPa
+        'extraTemp3'  : ds[22], #Celsius
+        'extraHumid3' : ds[23], #mBar/hPa
+        'extraTemp4'  : ds[24], #Celsius
+        'extraHumid4' : ds[25], #mBar/hPa
+        'extraTemp5'  : ds[26], #Celsius
+        'extraHumid5' : ds[27], #mBar/hPa
+        'extraTemp6'  : ds[28], #Celsius
+        'extraHumid6' : ds[29], #mBar/hPa
+        'extraTemp7'  : ds[30], #Celsius
+        'extraHumid7' : ds[31], #mBar/hPa
       }
 
       for key in weatherdata:
