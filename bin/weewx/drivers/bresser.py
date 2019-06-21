@@ -168,12 +168,14 @@ class BresserUSB(weewx.drivers.AbstractDevice):
     while True:
       try:
         dataset=self.read_usb_dataset()
-      except:
+      except usb.USBError:
         logerr("Lost USB connection. Reconnecting...")
         self.closePort()
         self.openPort()
         continue
-        
+      except:
+        break 
+
       ds=dataset.split()
       #2 2019-06-18 23:33 25.4 58 19.5 69 0.0 0.0 3.6 3.6 253 WSW 1014 953 0 13.6 --.- --.- -- --.- -- --.- -- --.- -- --.- -- --.- -- --.- --
       if len(ds) != 32:
@@ -241,10 +243,12 @@ class BresserUSB(weewx.drivers.AbstractDevice):
         except:
           pass
 
+      packet['rain'] = 0.0
       if 'rainDaily' in packet: #station sends rain in mm/day, weewx expects cm per interval
         if self.last_rain != None:
           packet['rain'] = 0.1*(packet['rainDaily']-self.last_rain)
-      self.last_rain = packet['rainDaily']
+
+          self.last_rain = packet['rainDaily']
       yield packet
       self.last_time = this_time
 
